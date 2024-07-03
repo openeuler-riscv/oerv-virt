@@ -6,3 +6,6 @@
 
 [Prepare Git](setup/prepare_git.md)
 
+# Kata Containers
+
+[CI](kata-containers/CI.md)

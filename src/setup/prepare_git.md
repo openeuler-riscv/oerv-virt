@@ -38,7 +38,7 @@ uid                          Hubot <hubot@example.com>
 ssb   4096R/4BB6D45482678BE3 2016-03-10
 ```
 
-and the partern after `/` in `sec` column (in this case `3AA5C34371567BD2`) is the `keyid` of the GPG key you just generated.
+and the pattern after `/` in `sec` column (in this case `3AA5C34371567BD2`) is the `keyid` of the GPG key you just generated.
 
 To Add it into your Github GPG keys, you will need to export it with command:
 
