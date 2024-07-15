@@ -4,8 +4,12 @@
 
 # Setup
 
-[Prepare Git](setup/prepare_git.md)
+- [Prepare Git](setup/prepare_git.md)
 
 # Kata Containers
 
-[CI](kata-containers/CI.md)
+- [CI](kata-containers/CI.md)
+
+-----------
+
+[Contributors](misc/contributors.md)
