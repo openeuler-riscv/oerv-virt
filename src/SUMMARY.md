@@ -10,6 +10,8 @@
 
 - [CI](kata-containers/CI.md)
 
+# Rust-Shyper
+
 -----------
 
 [Contributors](misc/contributors.md)
