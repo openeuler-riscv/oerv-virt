@@ -12,6 +12,10 @@
 
 # Rust-Shyper
 
+# Kubernetes
+
+- [Kubeadm Deployment](kubernetes/kubeadm_deployment.md)
+
 -----------
 
 [Contributors](misc/contributors.md)
