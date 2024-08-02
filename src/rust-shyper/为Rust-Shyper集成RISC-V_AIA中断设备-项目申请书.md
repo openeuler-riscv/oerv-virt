@@ -1,16 +1,8 @@
-
-
 ![image-20240524171936006](./img/image-20240524171936006.png)
-
-
 
 ![image-20240524172655786](./img/image-20240524172655786.png)
 
-
-
 # 项目申请书
-
-
 
 项目名称：为 Rust-Shyper 集成 RISC-V AIA 中断设备  
 
@@ -22,15 +14,9 @@
 
 完成日期：2024年 5月29日
 
-
-
 ------
-
-
 [TOC]
 ------
-
-
 
 ## 1 项目背景
 
@@ -62,8 +48,6 @@
 
 最终项目实现的目标：增加 RISC-V AIA (APLIC, IMSIC) 设备的支持，相关测试，并合入主线。
 
-
-
 ### 1.2 项目提出目的
 
 - 原先的PLIC中断控制器设计存在一定的局限性
@@ -78,19 +62,14 @@
   - 在IMSIC中实现了Interrupt file，支持虚拟化中断
   - 可以借助用于重定向MSI的IOMMU，最大限度地提高在虚拟机中运行的Guest直接控制设备的机会和能力，同时最大限度地减少虚拟机管理程序的参与（需实现IOMMU，比较复杂）
 
-
-
 ### 1.3 项目产出要求
 
 1. 调研 RISC-V AIA，形成 Report，RoadMap
 2. 为 Rust-Shyper RISC-V 支持 AIA
    - 支持 APLIC
    - 支持 IMSIC
-
 3. 增加相关单元测试，集成测试
 4. 合入主线
-
-
 
 ### 1.4 项目技术要求
 
@@ -99,15 +78,11 @@
 3. 了解 虚拟化相关知识
 4. 了解 RISC-V
 
-
-
 ### 1.5 项目相关
 
 项目仓库：https://gitee.com/openeuler/rust_shyper
 
 项目规范：[RISC-V AIA SPEC](https://github.com/riscv/riscv-aia/releases/download/1.0/riscv-interrupts-1.0.pdf)
-
-
 
 ## 2 项目实现方案
 
@@ -231,7 +206,6 @@ AIA主要包含三部分内容
     - 未被委托：bits 2:0，中断触发模式。Inactive、边沿触发（上升或者下降）、水平触发（高或者低）、detached(通过setip或者setipnum触发)
 - mmsiaddrcfg和mmsiaddrcfgh寄存器。用来配置M模式下的MSI地址，用来表示MSI中断要发送到哪个 CPU
 - smsiaddrcfg和smsiaddrcfgh寄存器。提供S模式的中断域与MSI地址相关的配置信息
-
 - setip[0]–setip[31]寄存器。设置中断待定位
 - setipnum寄存器。通过中断号来设置中断待定位
 - clripnum寄存器。通过中断号来清中断待定位
@@ -246,31 +220,23 @@ AIA主要包含三部分内容
 - domaincfg.DM = 0
   - bits31:18  Hart Index ：CPU编号
   - bits7:0  IPRIO：中断优先级。数值越小，优先级越高。相同优先级的中断源，中断号越小，优先级越高
-  
 - 直接投送中断到CPU，通常是有硬件连线
-
 - 直投模式，在MMIO后面有一个IDC结构，每个CPU一个
   - idelivery寄存器。投送总开关
   - iforce寄存器。强制发送中断到CPU，用于测试
   - ithreshold寄存器。设置最小能投送的中断优先级
   - topi寄存器。只读寄存器，返回当前优先级最高的pending状态的中断源
   - claimi寄存器，与topi寄存器类似，不过会清相应中断源的 pending位
-
 - 中断处理过程：
 
   <img src="./img/image-20240526143036881.png" alt="image-20240526143036881" style="zoom:40%;" />
 
-  （1）保存中断上下文
-  
-  （2）读取claim寄存器得到中断号i
-  
-  （3）i = i >> 16
-  
-  （4）处理这个中断号为i的中断
-  
-  （5）恢复中断上下文
-  
-  （6）中断返回
+  1. 保存中断上下文
+  2. 读取claim寄存器得到中断号i
+  3. i = i >> 16
+  4. 处理这个中断号为i的中断
+  5. 恢复中断上下文
+  6. 中断返回
 
 5. APLIC投送模式-MSI模式
 
@@ -278,31 +244,22 @@ AIA主要包含三部分内容
   - bits31:18  Hart Index ：CPU编号
   - bits17:12  Guest Index：如果实现了S模式并且实现了虚拟化，那么Guest Index用来包含0~GEILEN. Guest Index >0，表示发送到那个VS interrupt file，Guest Index = 0，那么只发送到S模式
   - bits10:0  EIID（External Interrupt Identity）：中断号，通常是写MSI地址的 message data
-  
 - APLIC需要知道每个CPU上的MSI地址：
   - 芯片设计时进行固定，硬件直接告诉APLIC MSI地址
   - 或者在启动阶段通过* msiaddrcfg*寄存器来配置
-  
 - 需要配置target[i]寄存器：表示wired中断要被MSI投送到哪个 CPU中哪个中断文件
-
 - 中断处理过程：
 
   <img src="./img/image-20240526144328101.png" alt="image-20240526144328101" style="zoom:30%;" />
 
   - 首先需要进行中断注册，配置target[i]寄存器，即第n个wired中断，要发送到哪个CPU，哪个中断文件，MSI中的中断号（EIID）是多少
   - CPU进行中断处理
-    
-    （1）保存中断上下文
-    
-    （2）读取*topei寄存器获取中断号i，写 *topei寄存器清除pending位
-    
-    （3）irq = i >> 16
-    
-    （4）处理这个中断号为irq的中断
-    
-    （5）恢复中断上下文
-    
-    （6）中断返回
+    1. 保存中断上下文
+    2. 读取*topei寄存器获取中断号i，写 *topei寄存器清除pending位
+    3. irq = i >> 16
+    4. 处理这个中断号为irq的中断
+    5. 恢复中断上下文
+    6. 中断返回
 
 6. MSI投送模式与APLIC的同步
 

@@ -2,7 +2,7 @@
 
 ### 1. 设备树代码：
 
-```dtd
+```dtb
         aplic@d000000 {
             phandle = <0x14>;
             riscv,num-sources = <0x60>;
