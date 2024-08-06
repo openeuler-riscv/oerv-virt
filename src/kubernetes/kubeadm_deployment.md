@@ -151,13 +151,21 @@ EOF
 
 # 安装统一依赖
 dnf install -y containerd socat kubernetes-kubeadm kubernetes-kubelet \
-                                cri-tools conntrack ipvsadm
+                                cri-tools conntrack ipvsadm containernetworking-plugins
 
 # 安装 master 依赖
 dnf install -y kubernetes-master
 
 # 安装 node 依赖
 dnf install -y kubernetes-node
+
+# 链接 cni 二进制到 /opt/cni/bin 下
+mkdir -p /opt/cni/bin
+
+for bin in `ls /usr/libexec/cni/bin`;
+do
+  ln -s /usr/libexec/cni/$bin  /opt/cni/bin/$bin
+done
 
 # 将默认文件中的 net.ipv4.ip_forward 参数改为 1
 sed -i '/net.ipv4.ip_forward =/s/0/1/g' /etc/sysctl.conf
